@@ -24,20 +24,7 @@ services:
       - app
     networks:
       - wallet-net
-    environment:
-      - CLOUDFLARE_TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:-}
-      - APP_PORT=${PORT:-3000}
-    entrypoint:
-      - /bin/sh
-      - -c
-      - |
-        if [ -n "$$CLOUDFLARE_TUNNEL_TOKEN" ]; then
-          echo "Starting Cloudflare Tunnel with Token..."
-          exec cloudflared tunnel --no-autoupdate run --token "$$CLOUDFLARE_TUNNEL_TOKEN"
-        else
-          echo "Starting Ephemeral Quick Tunnel (trycloudflare.com)..."
-          exec cloudflared tunnel --no-autoupdate --url "http://app:$${APP_PORT:-3000}"
-        fi
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
 
 networks:
   wallet-net:
