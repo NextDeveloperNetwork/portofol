@@ -260,9 +260,26 @@
             <textarea id="setHeroDesc" class="form-textarea" style="min-height: 100px;"></textarea>
           </div>
 
-          <div class="form-group">
-            <label class="form-label" for="setFooterText">Footer Notice</label>
-            <input type="text" id="setFooterText" class="form-input">
+          <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border-light);">
+            <div style="font-size: 0.9rem; font-weight: 800; color: #0f172a; margin-bottom: 0.9rem;">Footer Configuration</div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;">
+              <div class="form-group">
+                <label class="form-label" for="setFooterBrand">Footer Brand Title</label>
+                <input type="text" id="setFooterBrand" class="form-input" placeholder="Personal Wallet Vault">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="setFooterText">Footer Copyright / Notice</label>
+                <input type="text" id="setFooterText" class="form-input" placeholder="© 2026 Adenisa • Personal Digital Asset Wallet">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="setFooterTagline">Footer Tagline / Description</label>
+              <input type="text" id="setFooterTagline" class="form-input" placeholder="Curated multi-asset vault for live web applications, tools, and downloadable documents.">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="setFooterLinks">Footer Quick Links (one per line: <code>Label | URL</code>)</label>
+              <textarea id="setFooterLinks" class="form-textarea" style="min-height: 85px; font-family: monospace; font-size: 0.85rem;" placeholder="Home | /&#10;About Me | /about&#10;Admin Vault | /login"></textarea>
+            </div>
           </div>
 
           <button type="submit" class="btn-primary">
@@ -361,8 +378,33 @@
             </div>
 
             <div class="form-group">
+              <label class="form-label" for="profileWhatsappInput">WhatsApp Number</label>
+              <input type="text" id="profileWhatsappInput" class="form-input" placeholder="+355691234567">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="profilePhoneInput">Phone Number</label>
+              <input type="text" id="profilePhoneInput" class="form-input" placeholder="+355691234567">
+            </div>
+
+            <div class="form-group">
               <label class="form-label" for="profileAvatarUrl">Avatar Image URL</label>
               <input type="url" id="profileAvatarUrl" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="profileInstagramInput">Instagram URL</label>
+              <input type="url" id="profileInstagramInput" class="form-input" placeholder="https://instagram.com/username">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="profileTelegramInput">Telegram URL</label>
+              <input type="url" id="profileTelegramInput" class="form-input" placeholder="https://t.me/username">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="profileWebsiteInput">Personal Website URL</label>
+              <input type="url" id="profileWebsiteInput" class="form-input" placeholder="https://yourdomain.com">
             </div>
 
             <div class="form-group">

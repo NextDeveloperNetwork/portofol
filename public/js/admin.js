@@ -271,6 +271,9 @@ async function loadAdminSettings() {
     document.getElementById('setHeroCtaSecondary').value = s.hero_cta_secondary || '';
     document.getElementById('setCardLabel').value = s.wallet_card_label || '';
     document.getElementById('setProtocolTag').value = s.wallet_protocol_tag || '';
+    document.getElementById('setFooterBrand').value = s.footer_brand || '';
+    document.getElementById('setFooterTagline').value = s.footer_tagline || '';
+    document.getElementById('setFooterLinks').value = s.footer_links || '';
     document.getElementById('setFooterText').value = s.footer_text || '';
   } catch (err) {
     console.error('Failed to load settings:', err);
@@ -289,6 +292,9 @@ async function handleSaveSettings(e) {
     hero_cta_secondary: document.getElementById('setHeroCtaSecondary').value.trim(),
     wallet_card_label: document.getElementById('setCardLabel').value.trim(),
     wallet_protocol_tag: document.getElementById('setProtocolTag').value.trim(),
+    footer_brand: document.getElementById('setFooterBrand').value.trim(),
+    footer_tagline: document.getElementById('setFooterTagline').value.trim(),
+    footer_links: document.getElementById('setFooterLinks').value.trim(),
     footer_text: document.getElementById('setFooterText').value.trim()
   };
 
@@ -423,7 +429,12 @@ async function loadAdminProfile() {
     document.getElementById('profileNameInput').value = profile.name || '';
     document.getElementById('profileTitleInput').value = profile.title || '';
     document.getElementById('profileEmailInput').value = profile.email || '';
+    document.getElementById('profileWhatsappInput').value = profile.whatsapp_number || '';
+    document.getElementById('profilePhoneInput').value = profile.phone_number || '';
     document.getElementById('profileAvatarUrl').value = profile.avatar_url || '';
+    document.getElementById('profileInstagramInput').value = profile.instagram_url || '';
+    document.getElementById('profileTelegramInput').value = profile.telegram_url || '';
+    document.getElementById('profileWebsiteInput').value = profile.website_url || '';
     document.getElementById('profileGithubInput').value = profile.github_url || '';
     document.getElementById('profileLinkedinInput').value = profile.linkedin_url || '';
     document.getElementById('profileTwitterInput').value = profile.twitter_url || '';
@@ -448,7 +459,12 @@ async function handleSaveProfile(e) {
   const name = document.getElementById('profileNameInput').value.trim();
   const title = document.getElementById('profileTitleInput').value.trim();
   const email = document.getElementById('profileEmailInput').value.trim();
+  const whatsapp_number = document.getElementById('profileWhatsappInput').value.trim();
+  const phone_number = document.getElementById('profilePhoneInput').value.trim();
   const avatar_url = document.getElementById('profileAvatarUrl').value.trim();
+  const instagram_url = document.getElementById('profileInstagramInput').value.trim();
+  const telegram_url = document.getElementById('profileTelegramInput').value.trim();
+  const website_url = document.getElementById('profileWebsiteInput').value.trim();
   const github_url = document.getElementById('profileGithubInput').value.trim();
   const linkedin_url = document.getElementById('profileLinkedinInput').value.trim();
   const twitter_url = document.getElementById('profileTwitterInput').value.trim();
@@ -464,7 +480,20 @@ async function handleSaveProfile(e) {
         'Authorization': `Bearer ${authToken}`
       },
       body: JSON.stringify({
-        name, title, email, avatar_url, github_url, linkedin_url, twitter_url, bio, skills
+        name,
+        title,
+        email,
+        phone_number,
+        whatsapp_number,
+        avatar_url,
+        instagram_url,
+        telegram_url,
+        website_url,
+        github_url,
+        linkedin_url,
+        twitter_url,
+        bio,
+        skills
       })
     });
 

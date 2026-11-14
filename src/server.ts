@@ -100,6 +100,9 @@ app.get('/api/settings', async (_req: Request, res: Response) => {
       hero_cta_secondary: s.heroCtaSecondary,
       wallet_card_label: s.walletCardLabel,
       wallet_protocol_tag: s.walletProtocolTag,
+      footer_brand: s.footerBrand,
+      footer_tagline: s.footerTagline,
+      footer_links: s.footerLinks,
       footer_text: s.footerText,
       updated_at: s.updatedAt,
     });
@@ -119,6 +122,9 @@ app.put('/api/settings', authenticateToken, async (req: AuthRequest, res: Respon
     hero_cta_secondary,
     wallet_card_label,
     wallet_protocol_tag,
+    footer_brand,
+    footer_tagline,
+    footer_links,
     footer_text
   } = req.body;
 
@@ -136,6 +142,9 @@ app.put('/api/settings', authenticateToken, async (req: AuthRequest, res: Respon
         heroCtaSecondary: hero_cta_secondary,
         walletCardLabel: wallet_card_label,
         walletProtocolTag: wallet_protocol_tag,
+        footerBrand: footer_brand,
+        footerTagline: footer_tagline,
+        footerLinks: footer_links,
         footerText: footer_text,
       }).returning();
       updated = inserted[0];
@@ -150,6 +159,9 @@ app.put('/api/settings', authenticateToken, async (req: AuthRequest, res: Respon
         heroCtaSecondary: hero_cta_secondary ?? existing[0].heroCtaSecondary,
         walletCardLabel: wallet_card_label ?? existing[0].walletCardLabel,
         walletProtocolTag: wallet_protocol_tag ?? existing[0].walletProtocolTag,
+        footerBrand: footer_brand ?? existing[0].footerBrand,
+        footerTagline: footer_tagline ?? existing[0].footerTagline,
+        footerLinks: footer_links ?? existing[0].footerLinks,
         footerText: footer_text ?? existing[0].footerText,
         updatedAt: new Date(),
       }).where(eq(siteSettings.id, existing[0].id)).returning();
@@ -167,6 +179,9 @@ app.put('/api/settings', authenticateToken, async (req: AuthRequest, res: Respon
       hero_cta_secondary: updated.heroCtaSecondary,
       wallet_card_label: updated.walletCardLabel,
       wallet_protocol_tag: updated.walletProtocolTag,
+      footer_brand: updated.footerBrand,
+      footer_tagline: updated.footerTagline,
+      footer_links: updated.footerLinks,
       footer_text: updated.footerText,
     });
   } catch (err: any) {
@@ -190,9 +205,14 @@ app.get('/api/profile', async (_req: Request, res: Response) => {
       bio: p.bio,
       avatar_url: p.avatarUrl,
       email: p.email,
+      phone_number: p.phoneNumber,
+      whatsapp_number: p.whatsappNumber,
       github_url: p.githubUrl,
       linkedin_url: p.linkedinUrl,
       twitter_url: p.twitterUrl,
+      instagram_url: p.instagramUrl,
+      telegram_url: p.telegramUrl,
+      website_url: p.websiteUrl,
       skills: p.skills,
       updated_at: p.updatedAt,
     });
@@ -202,7 +222,22 @@ app.get('/api/profile', async (_req: Request, res: Response) => {
 });
 
 app.put('/api/profile', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
-  const { name, title, bio, avatar_url, email, github_url, linkedin_url, twitter_url, skills } = req.body;
+  const {
+    name,
+    title,
+    bio,
+    avatar_url,
+    email,
+    phone_number,
+    whatsapp_number,
+    github_url,
+    linkedin_url,
+    twitter_url,
+    instagram_url,
+    telegram_url,
+    website_url,
+    skills
+  } = req.body;
   try {
     const existing = await db.select().from(profile).limit(1);
     let updated;
@@ -213,9 +248,14 @@ app.put('/api/profile', authenticateToken, async (req: AuthRequest, res: Respons
         bio,
         avatarUrl: avatar_url,
         email,
+        phoneNumber: phone_number,
+        whatsappNumber: whatsapp_number,
         githubUrl: github_url,
         linkedinUrl: linkedin_url,
         twitterUrl: twitter_url,
+        instagramUrl: instagram_url,
+        telegramUrl: telegram_url,
+        websiteUrl: website_url,
         skills: skills || [],
       }).returning();
       updated = inserted[0];
@@ -226,9 +266,14 @@ app.put('/api/profile', authenticateToken, async (req: AuthRequest, res: Respons
         bio: bio ?? existing[0].bio,
         avatarUrl: avatar_url ?? existing[0].avatarUrl,
         email: email ?? existing[0].email,
+        phoneNumber: phone_number ?? existing[0].phoneNumber,
+        whatsappNumber: whatsapp_number ?? existing[0].whatsappNumber,
         githubUrl: github_url ?? existing[0].githubUrl,
         linkedinUrl: linkedin_url ?? existing[0].linkedinUrl,
         twitterUrl: twitter_url ?? existing[0].twitterUrl,
+        instagramUrl: instagram_url ?? existing[0].instagramUrl,
+        telegramUrl: telegram_url ?? existing[0].telegramUrl,
+        websiteUrl: website_url ?? existing[0].websiteUrl,
         skills: skills ?? existing[0].skills,
         updatedAt: new Date(),
       }).where(eq(profile.id, existing[0].id)).returning();
@@ -242,9 +287,14 @@ app.put('/api/profile', authenticateToken, async (req: AuthRequest, res: Respons
       bio: updated.bio,
       avatar_url: updated.avatarUrl,
       email: updated.email,
+      phone_number: updated.phoneNumber,
+      whatsapp_number: updated.whatsappNumber,
       github_url: updated.githubUrl,
       linkedin_url: updated.linkedinUrl,
       twitter_url: updated.twitterUrl,
+      instagram_url: updated.instagramUrl,
+      telegram_url: updated.telegramUrl,
+      website_url: updated.websiteUrl,
       skills: updated.skills,
     });
   } catch (err: any) {

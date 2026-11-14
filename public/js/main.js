@@ -120,6 +120,31 @@ async function loadSiteSettings() {
       const el = document.getElementById('walletProtocolTag');
       if (el) el.textContent = settings.wallet_protocol_tag;
     }
+    if (settings.footer_brand) {
+      const el = document.getElementById('footerBrand');
+      if (el) el.textContent = settings.footer_brand;
+    }
+    if (settings.footer_tagline) {
+      const el = document.getElementById('footerTagline');
+      if (el) el.textContent = settings.footer_tagline;
+    }
+    if (settings.footer_links) {
+      const el = document.getElementById('footerLinks');
+      if (el) {
+        const parsed = settings.footer_links
+          .split('\n')
+          .map(line => line.trim())
+          .filter(Boolean)
+          .map(line => {
+            const [label, ...rest] = line.split('|');
+            const url = (rest.join('|') || '#').trim();
+            const isExternal = /^https?:\/\//i.test(url);
+            const attrs = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
+            return `<a href="${escapeHtml(url)}"${attrs}>${escapeHtml((label || url).trim())}</a>`;
+          });
+        if (parsed.length > 0) el.innerHTML = parsed.join('');
+      }
+    }
     if (settings.footer_text) {
       const el = document.getElementById('footerText');
       if (el) el.innerHTML = escapeHtml(settings.footer_text);
@@ -135,9 +160,26 @@ async function loadProfile() {
     const res = await fetch('/api/profile');
     if (res.ok) {
       const data = await res.json();
-      if (data && data.name) {
+      if (!data) return;
+      if (data.name) {
         const ownerEl = document.getElementById('cardOwnerName');
         if (ownerEl) ownerEl.textContent = data.name;
+      }
+
+      const contactEl = document.getElementById('footerContactLinks');
+      if (contactEl) {
+        const pills = [];
+        if (data.whatsapp_number) {
+          const digits = String(data.whatsapp_number).replace(/[^\d]/g, '');
+          if (digits) pills.push(`<a href="https://wa.me/${digits}" target="_blank" rel="noopener noreferrer" class="footer-contact-pill pill-whatsapp">WhatsApp</a>`);
+        }
+        if (data.instagram_url) pills.push(`<a href="${escapeHtml(data.instagram_url)}" target="_blank" rel="noopener noreferrer" class="footer-contact-pill pill-instagram">Instagram</a>`);
+        if (data.telegram_url) pills.push(`<a href="${escapeHtml(data.telegram_url)}" target="_blank" rel="noopener noreferrer" class="footer-contact-pill">Telegram</a>`);
+        if (data.email) pills.push(`<a href="mailto:${escapeHtml(data.email)}" class="footer-contact-pill">Email</a>`);
+        if (data.phone_number) pills.push(`<a href="tel:${escapeHtml(data.phone_number)}" class="footer-contact-pill">Call</a>`);
+        if (data.github_url) pills.push(`<a href="${escapeHtml(data.github_url)}" target="_blank" rel="noopener noreferrer" class="footer-contact-pill">GitHub</a>`);
+        if (data.linkedin_url) pills.push(`<a href="${escapeHtml(data.linkedin_url)}" target="_blank" rel="noopener noreferrer" class="footer-contact-pill">LinkedIn</a>`);
+        if (pills.length > 0) contactEl.innerHTML = pills.join('');
       }
     }
   } catch (err) {
@@ -189,12 +231,21 @@ async function loadFiles() {
   }
 }
 
-// Render Webpages Cards with Clean Aspect & Badges
+// Extract clean hostname from URL
+function getHostLabel(urlStr) {
+  try {
+    return new URL(urlStr).hostname.replace(/^www\./, '');
+  } catch {
+    return urlStr || '';
+  }
+}
+
+// Render Compact Modern Asset Cards
 function renderWebpages(items) {
   const container = document.getElementById('webpagesGrid');
   if (!items || items.length === 0) {
     container.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; color: #64748b;">
+      <div style="grid-column: 1 / -1; text-align: center; padding: 2.5rem 1rem; color: #64748b;">
         <p>No webpages found in this category.</p>
       </div>
     `;
@@ -203,53 +254,50 @@ function renderWebpages(items) {
 
   container.innerHTML = items.map((page, index) => {
     const gradient = page.color_gradient || 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)';
-    const badgeHtml = page.badge ? `<span class="badge-pill">${escapeHtml(page.badge)}</span>` : '';
-    const featuredHtml = page.is_featured ? `<span class="badge-pill" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a;">★ Featured</span>` : '';
+    const badgeHtml = page.badge ? `<span class="badge-pill badge-live"><span class="badge-live-dot"></span>${escapeHtml(page.badge)}</span>` : '';
+    const featuredHtml = page.is_featured ? `<span class="badge-pill badge-featured">★ Featured</span>` : '';
     const iconSvg = getIconSvg(page.icon || 'globe');
+    const hostLabel = getHostLabel(page.url);
 
-    let mediaHeaderHtml = '';
-    if (page.preview_image) {
-      mediaHeaderHtml = `
-        <div class="card-media-banner">
-          <img src="${escapeHtml(page.preview_image)}" alt="${escapeHtml(page.title)}" class="card-media-img" onerror="this.onerror=null; this.parentElement.style.background='${gradient}'; this.remove();">
-          <div class="card-media-overlay-badges">
-            ${featuredHtml}
-            ${badgeHtml}
-          </div>
-          <div class="card-floating-icon">
-            ${iconSvg}
-          </div>
-        </div>
-      `;
-    } else {
-      mediaHeaderHtml = `
-        <div class="card-media-banner" style="background: ${gradient};">
-          <div class="card-media-overlay-badges">
-            ${featuredHtml}
-            ${badgeHtml}
-          </div>
-          <div class="card-floating-icon">
-            ${iconSvg}
-          </div>
-        </div>
-      `;
-    }
+    const mediaInner = page.preview_image
+      ? `<img src="${escapeHtml(page.preview_image)}" alt="${escapeHtml(page.title)}" class="card-media-img" onerror="this.onerror=null; this.parentElement.style.background='${gradient}'; this.remove();">`
+      : '';
+    const bannerStyle = page.preview_image ? '' : `style="background: ${gradient};"`;
 
     return `
-      <article class="webpage-card" style="animation: fadeInUp 0.4s ease ${index * 0.05}s both;">
-        ${mediaHeaderHtml}
+      <article class="webpage-card" style="animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${index * 0.04}s both;">
+        <div class="card-media-banner" ${bannerStyle}>
+          ${mediaInner}
+          <div class="card-media-scrim"></div>
+          <div class="card-media-top-left">
+            <span class="badge-pill badge-cat">${escapeHtml(page.category || 'App')}</span>
+          </div>
+          <div class="card-media-overlay-badges">
+            ${featuredHtml}
+            ${badgeHtml}
+          </div>
+          <div class="card-floating-icon">
+            ${iconSvg}
+          </div>
+        </div>
         <div class="card-body">
-          <span class="card-cat-tag">${escapeHtml(page.category || 'App')}</span>
-          <h3 class="card-title">${escapeHtml(page.title)}</h3>
+          <div class="card-title-row">
+            <h3 class="card-title">${escapeHtml(page.title)}</h3>
+          </div>
           <p class="card-desc">${escapeHtml(page.description || 'No description provided.')}</p>
           <div class="card-footer">
-            <span style="font-size: 0.775rem; color: #94a3b8; font-weight: 500;">${formatDate(page.created_at)}</span>
+            <span class="card-host-pill" title="${escapeHtml(page.url)}">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+              </svg>
+              <span>${escapeHtml(hostLabel)}</span>
+            </span>
             <a href="${escapeHtml(page.url)}" target="_blank" rel="noopener noreferrer" class="card-launch-btn">
-              <span>Launch Site</span>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                <polyline points="15 3 21 3 21 9"></polyline>
-                <line x1="10" y1="14" x2="21" y2="3"></line>
+              <span>Open</span>
+              <svg class="launch-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                <line x1="7" y1="17" x2="17" y2="7"></line>
+                <polyline points="7 7 17 7 17 17"></polyline>
               </svg>
             </a>
           </div>
@@ -259,12 +307,12 @@ function renderWebpages(items) {
   }).join('');
 }
 
-// Render Files Cards
+// Render Compact Files Cards
 function renderFiles(items) {
   const container = document.getElementById('filesGrid');
   if (!items || items.length === 0) {
     container.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; color: #64748b;">
+      <div style="grid-column: 1 / -1; text-align: center; padding: 2.5rem 1rem; color: #64748b;">
         <p>No attached files in vault yet.</p>
       </div>
     `;
@@ -272,31 +320,34 @@ function renderFiles(items) {
   }
 
   container.innerHTML = items.map((file, index) => {
+    const ext = (file.original_name || '').split('.').pop().toUpperCase().slice(0, 4) || 'FILE';
     return `
-      <div class="file-item" style="animation: fadeInUp 0.4s ease ${index * 0.05}s both;">
+      <div class="file-item" style="animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${index * 0.04}s both;">
         <div class="file-icon-square">
           ${getFileIconSvg(file.original_name)}
+          <span class="file-ext-tag">${escapeHtml(ext)}</span>
         </div>
-        <div style="flex-grow: 1; min-width: 0;">
-          <h4 style="font-size: 0.95rem; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-            ${escapeHtml(file.title || file.original_name)}
-          </h4>
-          <div style="font-size: 0.775rem; color: #64748b; margin: 0.15rem 0 0.45rem 0;">
-            <span>${formatBytes(file.file_size)}</span> &bull; 
-            <span>${escapeHtml(file.category || 'Document')}</span> &bull; 
-            <span>${file.downloads || 0} downloads</span>
+        <div class="file-content-col">
+          <div class="file-head-row">
+            <h4 class="file-title-text" title="${escapeHtml(file.title || file.original_name)}">
+              ${escapeHtml(file.title || file.original_name)}
+            </h4>
+            <span class="file-cat-badge">${escapeHtml(file.category || 'Document')}</span>
           </div>
-          <p style="font-size: 0.825rem; color: #475569; margin-bottom: 0.75rem; line-height: 1.4;">
+          <p class="file-desc-text">
             ${escapeHtml(file.description || file.original_name)}
           </p>
-          <a href="/api/files/${file.id}/download" class="file-download-action" onclick="handleFileDownload(${file.id})">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            <span>Download</span>
-          </a>
+          <div class="file-footer-row">
+            <span class="file-meta-text">${formatBytes(file.file_size)} &bull; ${file.downloads || 0} dl</span>
+            <a href="/api/files/${file.id}/download" class="file-download-action" onclick="handleFileDownload(${file.id})">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Download</span>
+            </a>
+          </div>
         </div>
       </div>
     `;

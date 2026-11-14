@@ -33,12 +33,24 @@ export async function initDB() {
         bio TEXT,
         avatar_url TEXT,
         email VARCHAR(200),
+        phone_number VARCHAR(50),
+        whatsapp_number VARCHAR(50),
         github_url TEXT,
         linkedin_url TEXT,
         twitter_url TEXT,
+        instagram_url TEXT,
+        telegram_url TEXT,
+        website_url TEXT,
         skills JSONB DEFAULT '[]'::jsonb,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+
+      ALTER TABLE profile
+        ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50),
+        ADD COLUMN IF NOT EXISTS whatsapp_number VARCHAR(50),
+        ADD COLUMN IF NOT EXISTS instagram_url TEXT,
+        ADD COLUMN IF NOT EXISTS telegram_url TEXT,
+        ADD COLUMN IF NOT EXISTS website_url TEXT;
 
       CREATE TABLE IF NOT EXISTS webpages (
         id SERIAL PRIMARY KEY,
@@ -81,9 +93,17 @@ export async function initDB() {
         hero_cta_secondary VARCHAR(100) DEFAULT 'About Creator',
         wallet_card_label VARCHAR(100) DEFAULT 'TOTAL ASSET BALANCE',
         wallet_protocol_tag VARCHAR(100) DEFAULT 'PG-TS-V2',
+        footer_brand VARCHAR(150) DEFAULT 'Personal Wallet Vault',
+        footer_tagline TEXT DEFAULT 'Curated multi-asset vault for live web applications, tools, and downloadable documents.',
+        footer_links TEXT DEFAULT E'Home | /\nAbout Me | /about\nAdmin Vault | /login',
         footer_text TEXT DEFAULT '© 2026 Adenisa • Personal Digital Asset Wallet • Powered by TypeScript & PostgreSQL',
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+
+      ALTER TABLE site_settings
+        ADD COLUMN IF NOT EXISTS footer_brand VARCHAR(150) DEFAULT 'Personal Wallet Vault',
+        ADD COLUMN IF NOT EXISTS footer_tagline TEXT DEFAULT 'Curated multi-asset vault for live web applications, tools, and downloadable documents.',
+        ADD COLUMN IF NOT EXISTS footer_links TEXT DEFAULT E'Home | /\nAbout Me | /about\nAdmin Vault | /login';
     `);
 
     // Verify if default admin user exists in DB; if empty, seed initial user without reading .env
@@ -110,6 +130,9 @@ export async function initDB() {
         heroCtaSecondary: 'About Creator',
         walletCardLabel: 'TOTAL ASSET BALANCE',
         walletProtocolTag: 'PG-TS-V2',
+        footerBrand: 'Personal Wallet Vault',
+        footerTagline: 'Curated multi-asset vault for live web applications, tools, and downloadable documents.',
+        footerLinks: 'Home | /\nAbout Me | /about\nAdmin Vault | /login',
         footerText: '© 2026 Adenisa • Personal Digital Asset Wallet • Powered by TypeScript & PostgreSQL',
       });
     }
