@@ -231,8 +231,8 @@ async function loadVaultSnapshot() {
     const stats = await res.json();
     const webEl = document.getElementById('aboutWebpagesCount');
     const fileEl = document.getElementById('aboutFilesCount');
-    if (webEl) webEl.textContent = stats.total_webpages ?? 0;
-    if (fileEl) fileEl.textContent = stats.total_files ?? 0;
+    if (webEl) webEl.textContent = stats.totalWebpages ?? stats.total_webpages ?? 0;
+    if (fileEl) fileEl.textContent = stats.totalFiles ?? stats.total_files ?? 0;
   } catch (err) {
     console.error('Error loading vault snapshot:', err);
   }

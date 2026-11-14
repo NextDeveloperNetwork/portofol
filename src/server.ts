@@ -45,7 +45,13 @@ const upload = multer({
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.static(path.join(__dirname, '..', 'public'), {
+  etag: false,
+  lastModified: false,
+  setHeaders: (res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  }
+}));
 
 // ---------------- AUTH ROUTES ----------------
 app.post('/api/auth/login', async (req: Request, res: Response): Promise<void> => {
@@ -607,14 +613,17 @@ app.get('/api/stats', async (_req: Request, res: Response) => {
 
 // HTML routes
 app.get('/about', (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store');
   res.sendFile(path.join(__dirname, '..', 'public', 'about.html'));
 });
 
 app.get('/login', (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store');
   res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
 });
 
 app.get('/admin', (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store');
   res.sendFile(path.join(__dirname, '..', 'public', 'admin.html'));
 });
 
