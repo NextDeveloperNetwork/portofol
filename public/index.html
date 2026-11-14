@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personal Asset Wallet &amp; Vault</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- Clean Fluid Navbar -->
+  <header class="navbar">
+    <div class="container-fluid" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+      <a href="/" class="logo-group">
+        <div class="wallet-chip-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="2" y="5" width="20" height="14" rx="2"/>
+            <line x1="2" y1="10" x2="22" y2="10"/>
+          </svg>
+        </div>
+        <span class="logo-text">Personal Wallet <span class="logo-badge">Vault</span></span>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="/" class="nav-link active">Home</a></li>
+          <li><a href="/about" class="nav-link">About Me</a></li>
+          <li id="adminNavSlot">
+            <a href="/login" class="nav-link nav-btn-admin">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <span>Admin Login</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Full-Width Modern Hero Banner -->
+  <section class="hero-wrapper">
+    <div class="container-fluid">
+      <div class="hero-layout">
+        <div class="hero-content">
+          <div class="hero-pill">
+            <span class="hero-pill-dot"></span>
+            <span id="heroBadge">Personal Multi-Asset Web Vault</span>
+          </div>
+          <h1 class="hero-title" id="heroTitleContainer">
+            <span id="heroPrefix">All My</span>
+            <span class="hero-gradient-text" id="heroHighlight">Webpages &amp; Files</span>
+            <span id="heroSuffix">In One Clean Vault</span>
+          </h1>
+          <p class="hero-desc" id="heroDesc">
+            An interactive, high-performance personal wallet holding my live web applications, digital tools, and downloadable documents. Built with TypeScript and PostgreSQL.
+          </p>
+          <div class="hero-actions">
+            <a href="#vault-explorer" class="btn-primary" id="heroCtaPrimary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span>Explore Vault</span>
+            </a>
+            <a href="/about" class="btn-secondary" id="heroCtaSecondary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              <span>About Creator</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Clear Modern Wallet Card -->
+        <div class="wallet-card-container">
+          <div class="wallet-card-clear">
+            <div class="card-header-row">
+              <div class="wallet-card-chip"></div>
+              <div class="card-status-badge">
+                <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="12" cy="12" r="10"></circle>
+                </svg>
+                ACTIVE VAULT
+              </div>
+            </div>
+            <div style="margin: 1.5rem 0;">
+              <div class="card-vault-label" id="cardVaultLabel">TOTAL ASSET BALANCE</div>
+              <div class="card-vault-balance" id="cardAssetCount">
+                <span>0</span>
+                <span style="font-size: 1rem; font-weight: 600; color: #64748b;">Assets Loaded</span>
+              </div>
+            </div>
+            <div class="card-footer-row">
+              <div>
+                <div style="font-size: 0.7rem; color: #64748b; font-weight: 700; letter-spacing: 0.05em;">WALLET OWNER</div>
+                <div class="card-holder-name" id="cardOwnerName">Adenisa</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 0.7rem; color: #64748b; font-weight: 700; letter-spacing: 0.05em;">ARCHITECTURE</div>
+                <div style="font-size: 0.85rem; font-weight: 800; color: var(--accent-primary);" id="walletProtocolTag">PG-TS-V2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Full-Page Main Content -->
+  <main class="container-fluid">
+    <!-- Live Stats Grid across full width -->
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-icon" style="background: #eef2ff; color: #4f46e5;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="stat-number" id="statWebpages">0</div>
+          <div class="stat-desc">Webpages Attached</div>
+        </div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-icon" style="background: #f0f9ff; color: #0284c7;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+        </div>
+        <div>
+          <div class="stat-number" id="statFiles">0</div>
+          <div class="stat-desc">Files Stored</div>
+        </div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-icon" style="background: #ecfdf5; color: #059669;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+        </div>
+        <div>
+          <div class="stat-number" id="statDownloads">0</div>
+          <div class="stat-desc">Total Downloads</div>
+        </div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-icon" style="background: #fffbeb; color: #d97706;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="stat-number" id="statStorage">0 KB</div>
+          <div class="stat-desc">Vault Data Weight</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Explorer & Controls -->
+    <section id="vault-explorer">
+      <div class="toolbar-wrap">
+        <div class="toolbar-tabs">
+          <button class="toolbar-tab-btn active" id="tabWebpagesBtn" onclick="switchVaultTab('webpages')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10z"></path>
+            </svg>
+            <span>Attached Webpages</span>
+            <span id="tabWebpagesCount" class="badge-pill" style="font-size: 0.65rem; padding: 0.15rem 0.45rem;">0</span>
+          </button>
+
+          <button class="toolbar-tab-btn" id="tabFilesBtn" onclick="switchVaultTab('files')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            <span>Attached Files</span>
+            <span id="tabFilesCount" class="badge-pill" style="font-size: 0.65rem; padding: 0.15rem 0.45rem;">0</span>
+          </button>
+        </div>
+
+        <div class="toolbar-filters">
+          <div class="search-field">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="searchInput" placeholder="Search pages and files..." oninput="handleSearch()">
+          </div>
+
+          <select id="categoryFilter" class="select-field" onchange="handleCategoryFilter()">
+            <option value="ALL">All Categories</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Webpages Grid View -->
+      <div id="webpagesSection">
+        <div id="webpagesGrid" class="webpages-grid">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- Files Grid View -->
+      <div id="filesSection" style="display: none;">
+        <div id="filesGrid" class="files-grid">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Clear Modern Footer -->
+  <footer class="footer-clear">
+    <div class="container-fluid">
+      <p id="footerText">&copy; 2026 Adenisa &bull; Personal Digital Asset Wallet &bull; Powered by TypeScript &amp; PostgreSQL</p>
+    </div>
+  </footer>
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

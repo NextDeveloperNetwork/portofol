@@ -1,0 +1,46 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: personal-wallet-app
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - PORT=${PORT:-3000}
+      - JWT_SECRET=${JWT_SECRET}
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+    ports:
+      - "${HOST_PORT:-48921}:${PORT:-3000}"
+    volumes:
+      - ./public/uploads:/app/public/uploads
+    networks:
+      - wallet-net
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: personal-wallet-tunnel
+    restart: unless-stopped
+    depends_on:
+      - app
+    networks:
+      - wallet-net
+    environment:
+      - CLOUDFLARE_TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN:-}
+      - APP_PORT=${PORT:-3000}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        if [ -n "$$CLOUDFLARE_TUNNEL_TOKEN" ]; then
+          echo "Starting Cloudflare Tunnel with Token..."
+          exec cloudflared tunnel --no-autoupdate run --token "$$CLOUDFLARE_TUNNEL_TOKEN"
+        else
+          echo "Starting Ephemeral Quick Tunnel (trycloudflare.com)..."
+          exec cloudflared tunnel --no-autoupdate --url "http://app:$${APP_PORT:-3000}"
+        fi
+
+networks:
+  wallet-net:
+    driver: bridge

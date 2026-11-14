@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About Me — Creator Profile &amp; Presentation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- Clean Navbar -->
+  <header class="navbar">
+    <div class="container-fluid" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+      <a href="/" class="logo-group">
+        <div class="wallet-chip-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="2" y="5" width="20" height="14" rx="2"/>
+            <line x1="2" y1="10" x2="22" y2="10"/>
+          </svg>
+        </div>
+        <span class="logo-text">Personal Wallet <span class="logo-badge">Vault</span></span>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="/" class="nav-link">Home</a></li>
+          <li><a href="/about" class="nav-link active">About Me</a></li>
+          <li>
+            <a href="/login" class="nav-link nav-btn-admin">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <span>Admin Login</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container-fluid" style="padding-top: 2rem; padding-bottom: 4rem;">
+    <!-- Profile Presentation Header -->
+    <div class="about-header-clear">
+      <div class="about-avatar-clear" id="avatarContainer">
+        <span id="avatarFallback">A</span>
+      </div>
+      <h1 style="font-size: 2.75rem; font-weight: 800; color: #0f172a; margin-bottom: 0.35rem;" id="profileName">Adenisa</h1>
+      <p style="font-size: 1.2rem; color: var(--accent-primary); font-weight: 700;" id="profileTitle">Full-Stack Developer &amp; Software Architect</p>
+
+      <div class="about-socials-row" id="socialLinks">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Wide Two-Column Details Layout -->
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2.5rem; margin-top: 2rem;">
+      <div>
+        <div class="content-box">
+          <h2 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.6rem; color: #0f172a;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            Background &amp; Philosophy
+          </h2>
+          <p style="font-size: 1.1rem; color: var(--text-secondary); line-height: 1.8;" id="profileBio">
+            Loading presentation...
+          </p>
+        </div>
+
+        <div class="content-box">
+          <h2 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.6rem; color: #0f172a;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-cyan)" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            Technical Highlights
+          </h2>
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div style="padding-left: 1rem; border-left: 3px solid var(--accent-primary);">
+              <div style="font-weight: 800; font-size: 1.05rem; color: #0f172a;">Multi-Asset Personal Web Vault</div>
+              <div style="font-size: 0.85rem; color: var(--accent-primary); font-weight: 700; margin-bottom: 0.35rem;">TypeScript &bull; PostgreSQL &bull; Modern UI</div>
+              <p style="font-size: 0.95rem; color: var(--text-secondary);">An interactive platform enabling direct management, image previews, and immediate launches of web systems and downloadable documents.</p>
+            </div>
+            <div style="padding-left: 1rem; border-left: 3px solid var(--accent-cyan);">
+              <div style="font-weight: 800; font-size: 1.05rem; color: #0f172a;">Full-Stack Cloud Architecture</div>
+              <div style="font-size: 0.85rem; color: var(--accent-cyan); font-weight: 700; margin-bottom: 0.35rem;">High Scalability &bull; Microservices &bull; Databases</div>
+              <p style="font-size: 0.95rem; color: var(--text-secondary);">Specialized in responsive web technologies, scalable backend architectures, and secure authenticated portals.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="content-box">
+          <h2 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.6rem; color: #0f172a;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-amber)" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            Core Competencies
+          </h2>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.6rem;" id="skillsContainer">
+            <span class="badge-pill" style="background: #eef2ff; color: var(--accent-primary); font-size: 0.85rem; padding: 0.4rem 0.85rem;">TypeScript</span>
+            <span class="badge-pill" style="background: #eef2ff; color: var(--accent-primary); font-size: 0.85rem; padding: 0.4rem 0.85rem;">PostgreSQL</span>
+            <span class="badge-pill" style="background: #eef2ff; color: var(--accent-primary); font-size: 0.85rem; padding: 0.4rem 0.85rem;">Node.js</span>
+          </div>
+        </div>
+
+        <div class="content-box" style="border-color: #c7d2fe; background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);">
+          <h2 style="font-size: 1.35rem; font-weight: 800; margin-bottom: 0.75rem; color: #0f172a;">Direct Contact</h2>
+          <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+            Have a question or looking to build a new platform? Send an inquiry directly.
+          </p>
+          <a id="emailBtn" href="mailto:adenisa@example.com" class="btn-primary" style="width: 100%; justify-content: center; padding: 0.85rem;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <span>Send Direct Message</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer-clear">
+    <div class="container-fluid">
+      <p>&copy; 2026 Adenisa &bull; Personal Digital Asset Wallet</p>
+    </div>
+  </footer>
+
+  <script src="/js/about.js"></script>
+</body>
+</html>
