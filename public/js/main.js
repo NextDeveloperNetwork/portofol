@@ -4,6 +4,7 @@ let activeTab = 'webpages';
 
 document.addEventListener('DOMContentLoaded', () => {
   checkLoginStatus();
+  initWalletCard3D();
   loadSiteSettings();
   loadProfile();
   loadStats();
@@ -11,14 +12,74 @@ document.addEventListener('DOMContentLoaded', () => {
   loadFiles();
 });
 
-// Check if admin is currently signed in
+// Interactive 3D card tilt & specular light shine
+function initWalletCard3D() {
+  const card = document.getElementById('tiltWalletCard');
+  const shine = document.getElementById('cardShine');
+  if (!card) return;
+
+  card.addEventListener('mousemove', (e) => {
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    const rotateX = ((y - centerY) / centerY) * -10;
+    const rotateY = ((x - centerX) / centerX) * 12;
+
+    card.style.transform = `perspective(800px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-4px)`;
+
+    if (shine) {
+      const shineX = (x / rect.width) * 100;
+      const shineY = (y / rect.height) * 100;
+      shine.style.background = `radial-gradient(circle at ${shineX}% ${shineY}%, rgba(255, 255, 255, 0.75) 0%, transparent 60%)`;
+      shine.style.opacity = '1';
+    }
+  });
+
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) translateY(0px)';
+    if (shine) {
+      shine.style.opacity = '0.5';
+    }
+  });
+}
+
+// Smooth animated number counter
+function animateNumber(element, targetValue, duration = 800) {
+  if (!element) return;
+  const target = Number(targetValue) || 0;
+  const start = 0;
+  const startTime = performance.now();
+
+  function update(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    // Ease-out cubic
+    const easeProgress = 1 - Math.pow(1 - progress, 3);
+    const current = Math.floor(start + (target - start) * easeProgress);
+
+    element.textContent = current;
+
+    if (progress < 1) {
+      requestAnimationFrame(update);
+    } else {
+      element.textContent = target;
+    }
+  }
+
+  requestAnimationFrame(update);
+}
+
+// Check if admin is signed in
 function checkLoginStatus() {
   const token = localStorage.getItem('pewallet_token');
   const slot = document.getElementById('adminNavSlot');
   if (token && slot) {
     slot.innerHTML = `
       <a href="/admin" class="nav-link nav-btn-admin">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 20h9"></path>
           <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
         </svg>
@@ -28,7 +89,7 @@ function checkLoginStatus() {
   }
 }
 
-// Fetch Site Settings and dynamically inject text into landing page
+// Fetch Site Settings
 async function loadSiteSettings() {
   try {
     const res = await fetch('/api/settings');
@@ -84,22 +145,24 @@ async function loadProfile() {
   }
 }
 
-// Fetch Stats
+// Fetch Stats with Counter Animation
 async function loadStats() {
   try {
     const res = await fetch('/api/stats');
     if (res.ok) {
       const stats = await res.json();
-      document.getElementById('statWebpages').textContent = stats.totalWebpages || 0;
-      document.getElementById('statFiles').textContent = stats.totalFiles || 0;
-      document.getElementById('statDownloads').textContent = stats.totalDownloads || 0;
-      document.getElementById('statStorage').textContent = formatBytes(stats.totalSize || 0);
+
+      // Number animations
+      animateNumber(document.getElementById('statWebpages'), stats.totalWebpages || 0);
+      animateNumber(document.getElementById('statFiles'), stats.totalFiles || 0);
+      animateNumber(document.getElementById('statDownloads'), stats.totalDownloads || 0);
+
+      const storageEl = document.getElementById('statStorage');
+      if (storageEl) storageEl.textContent = formatBytes(stats.totalSize || 0);
 
       const totalAssets = (stats.totalWebpages || 0) + (stats.totalFiles || 0);
-      document.getElementById('cardAssetCount').innerHTML = `
-        <span>${totalAssets}</span>
-        <span style="font-size: 1rem; font-weight: 600; color: #64748b;">Assets Loaded</span>
-      `;
+      const cardNum = document.getElementById('cardCountNum');
+      if (cardNum) animateNumber(cardNum, totalAssets);
     }
   } catch (err) {
     console.error('Failed to load stats:', err);
@@ -135,19 +198,19 @@ async function loadFiles() {
   }
 }
 
-// Render Webpages Cards with Images
+// Render Webpages Cards with Clean Aspect & Badges
 function renderWebpages(items) {
   const container = document.getElementById('webpagesGrid');
   if (!items || items.length === 0) {
     container.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; color: #64748b;">
+      <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; color: #64748b;">
         <p>No webpages found in this category.</p>
       </div>
     `;
     return;
   }
 
-  container.innerHTML = items.map(page => {
+  container.innerHTML = items.map((page, index) => {
     const gradient = page.color_gradient || 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)';
     const badgeHtml = page.badge ? `<span class="badge-pill">${escapeHtml(page.badge)}</span>` : '';
     const featuredHtml = page.is_featured ? `<span class="badge-pill" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a;">★ Featured</span>` : '';
@@ -182,7 +245,7 @@ function renderWebpages(items) {
     }
 
     return `
-      <article class="webpage-card">
+      <article class="webpage-card" style="animation: fadeInUp 0.4s ease ${index * 0.05}s both;">
         ${mediaHeaderHtml}
         <div class="card-body">
           <span class="card-cat-tag">${escapeHtml(page.category || 'App')}</span>
@@ -192,7 +255,7 @@ function renderWebpages(items) {
             <span style="font-size: 0.775rem; color: #94a3b8; font-weight: 500;">${formatDate(page.created_at)}</span>
             <a href="${escapeHtml(page.url)}" target="_blank" rel="noopener noreferrer" class="card-launch-btn">
               <span>Launch Site</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
                 <polyline points="15 3 21 3 21 9"></polyline>
                 <line x1="10" y1="14" x2="21" y2="3"></line>
@@ -210,33 +273,33 @@ function renderFiles(items) {
   const container = document.getElementById('filesGrid');
   if (!items || items.length === 0) {
     container.innerHTML = `
-      <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; color: #64748b;">
+      <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; color: #64748b;">
         <p>No attached files in vault yet.</p>
       </div>
     `;
     return;
   }
 
-  container.innerHTML = items.map(file => {
+  container.innerHTML = items.map((file, index) => {
     return `
-      <div class="file-item">
+      <div class="file-item" style="animation: fadeInUp 0.4s ease ${index * 0.05}s both;">
         <div class="file-icon-square">
           ${getFileIconSvg(file.original_name)}
         </div>
         <div style="flex-grow: 1; min-width: 0;">
-          <h4 style="font-size: 1rem; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          <h4 style="font-size: 0.95rem; font-weight: 700; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
             ${escapeHtml(file.title || file.original_name)}
           </h4>
-          <div style="font-size: 0.8rem; color: #64748b; margin: 0.2rem 0 0.5rem 0;">
+          <div style="font-size: 0.775rem; color: #64748b; margin: 0.15rem 0 0.45rem 0;">
             <span>${formatBytes(file.file_size)}</span> &bull; 
             <span>${escapeHtml(file.category || 'Document')}</span> &bull; 
             <span>${file.downloads || 0} downloads</span>
           </div>
-          <p style="font-size: 0.85rem; color: #475569; margin-bottom: 0.85rem; line-height: 1.4;">
+          <p style="font-size: 0.825rem; color: #475569; margin-bottom: 0.75rem; line-height: 1.4;">
             ${escapeHtml(file.description || file.original_name)}
           </p>
           <a href="/api/files/${file.id}/download" class="file-download-action" onclick="handleFileDownload(${file.id})">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
               <line x1="12" y1="15" x2="12" y2="3"></line>
@@ -348,25 +411,25 @@ function escapeHtml(str) {
 function getIconSvg(iconName) {
   switch (iconName) {
     case 'cpu':
-      return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>`;
+      return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>`;
     case 'server':
-      return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>`;
+      return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>`;
     case 'sparkles':
-      return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>`;
+      return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>`;
     case 'trending-up':
-      return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`;
+      return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`;
     default:
-      return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10z"/></svg>`;
+      return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10z"/></svg>`;
   }
 }
 
 function getFileIconSvg(filename) {
   const ext = (filename || '').split('.').pop().toLowerCase();
   if (['pdf'].includes(ext)) {
-    return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+    return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
   }
   if (['zip', 'rar', 'tar', 'gz', '7z'].includes(ext)) {
-    return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>`;
+    return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>`;
   }
-  return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+  return `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
 }
