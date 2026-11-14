@@ -145,21 +145,12 @@ async function loadProfile() {
   }
 }
 
-// Fetch Stats with Counter Animation
+// Fetch total asset count for wallet card
 async function loadStats() {
   try {
     const res = await fetch('/api/stats');
     if (res.ok) {
       const stats = await res.json();
-
-      // Number animations
-      animateNumber(document.getElementById('statWebpages'), stats.totalWebpages || 0);
-      animateNumber(document.getElementById('statFiles'), stats.totalFiles || 0);
-      animateNumber(document.getElementById('statDownloads'), stats.totalDownloads || 0);
-
-      const storageEl = document.getElementById('statStorage');
-      if (storageEl) storageEl.textContent = formatBytes(stats.totalSize || 0);
-
       const totalAssets = (stats.totalWebpages || 0) + (stats.totalFiles || 0);
       const cardNum = document.getElementById('cardCountNum');
       if (cardNum) animateNumber(cardNum, totalAssets);
