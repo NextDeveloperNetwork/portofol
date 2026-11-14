@@ -5,10 +5,12 @@ services:
       dockerfile: Dockerfile
     container_name: personal-wallet-app
     restart: unless-stopped
-    env_file:
-      - .env
+    environment:
+      - DATABASE_URL
+      - PORT=${PORT:-3000}
+      - JWT_SECRET
     ports:
-      - "${HOST_PORT}:${PORT}"
+      - "${HOST_PORT:-48921}:${PORT:-3000}"
     volumes:
       - ./public/uploads:/app/public/uploads
     networks:
@@ -20,8 +22,8 @@ services:
     restart: unless-stopped
     depends_on:
       - app
-    env_file:
-      - .env
+    environment:
+      - CLOUDFLARE_TUNNEL_TOKEN
     networks:
       - wallet-net
     command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
