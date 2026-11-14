@@ -6,7 +6,9 @@ import dotenv from 'dotenv';
 import multer from 'multer';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { pool, initDB } from './db';
+import { eq, desc, sql, count } from 'drizzle-orm';
+import { db, initDB } from './db/index';
+import { users, profile, webpages, files, siteSettings } from './db/schema';
 import { authenticateToken, AuthRequest } from './middleware/auth';
 
 dotenv.config();
@@ -54,14 +56,14 @@ app.post('/api/auth/login', async (req: Request, res: Response): Promise<void> =
   }
 
   try {
-    const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
-    if (result.rows.length === 0) {
+    const userList = await db.select().from(users).where(eq(users.username, username)).limit(1);
+    if (userList.length === 0) {
       res.status(401).json({ error: 'Invalid credentials' });
       return;
     }
 
-    const user = result.rows[0];
-    const match = await bcrypt.compare(password, user.password_hash);
+    const user = userList[0];
+    const match = await bcrypt.compare(password, user.passwordHash);
     if (!match) {
       res.status(401).json({ error: 'Invalid credentials' });
       return;
@@ -81,8 +83,26 @@ app.get('/api/auth/verify', authenticateToken, (req: AuthRequest, res: Response)
 // ---------------- SITE SETTINGS (EDITABLE LANDING PAGE) ----------------
 app.get('/api/settings', async (_req: Request, res: Response) => {
   try {
-    const result = await pool.query('SELECT * FROM site_settings ORDER BY id ASC LIMIT 1');
-    res.json(result.rows[0] || {});
+    const result = await db.select().from(siteSettings).limit(1);
+    const s = result[0];
+    if (!s) {
+      res.json({});
+      return;
+    }
+    res.json({
+      id: s.id,
+      hero_badge: s.heroBadge,
+      hero_title_prefix: s.heroTitlePrefix,
+      hero_title_highlight: s.heroTitleHighlight,
+      hero_title_suffix: s.heroTitleSuffix,
+      hero_description: s.heroDescription,
+      hero_cta_primary: s.heroCtaPrimary,
+      hero_cta_secondary: s.heroCtaSecondary,
+      wallet_card_label: s.walletCardLabel,
+      wallet_protocol_tag: s.walletProtocolTag,
+      footer_text: s.footerText,
+      updated_at: s.updatedAt,
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -103,35 +123,52 @@ app.put('/api/settings', authenticateToken, async (req: AuthRequest, res: Respon
   } = req.body;
 
   try {
-    const existing = await pool.query('SELECT id FROM site_settings LIMIT 1');
-    if (existing.rows.length === 0) {
-      const inserted = await pool.query(
-        `INSERT INTO site_settings (
-          hero_badge, hero_title_prefix, hero_title_highlight, hero_title_suffix,
-          hero_description, hero_cta_primary, hero_cta_secondary, wallet_card_label, wallet_protocol_tag, footer_text
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
-        [hero_badge, hero_title_prefix, hero_title_highlight, hero_title_suffix, hero_description, hero_cta_primary, hero_cta_secondary, wallet_card_label, wallet_protocol_tag, footer_text]
-      );
-      res.json(inserted.rows[0]);
+    const existing = await db.select().from(siteSettings).limit(1);
+    let updated;
+    if (existing.length === 0) {
+      const inserted = await db.insert(siteSettings).values({
+        heroBadge: hero_badge,
+        heroTitlePrefix: hero_title_prefix,
+        heroTitleHighlight: hero_title_highlight,
+        heroTitleSuffix: hero_title_suffix,
+        heroDescription: hero_description,
+        heroCtaPrimary: hero_cta_primary,
+        heroCtaSecondary: hero_cta_secondary,
+        walletCardLabel: wallet_card_label,
+        walletProtocolTag: wallet_protocol_tag,
+        footerText: footer_text,
+      }).returning();
+      updated = inserted[0];
     } else {
-      const updated = await pool.query(
-        `UPDATE site_settings SET
-          hero_badge = COALESCE($1, hero_badge),
-          hero_title_prefix = COALESCE($2, hero_title_prefix),
-          hero_title_highlight = COALESCE($3, hero_title_highlight),
-          hero_title_suffix = COALESCE($4, hero_title_suffix),
-          hero_description = COALESCE($5, hero_description),
-          hero_cta_primary = COALESCE($6, hero_cta_primary),
-          hero_cta_secondary = COALESCE($7, hero_cta_secondary),
-          wallet_card_label = COALESCE($8, wallet_card_label),
-          wallet_protocol_tag = COALESCE($9, wallet_protocol_tag),
-          footer_text = COALESCE($10, footer_text),
-          updated_at = CURRENT_TIMESTAMP
-         WHERE id = $11 RETURNING *`,
-        [hero_badge, hero_title_prefix, hero_title_highlight, hero_title_suffix, hero_description, hero_cta_primary, hero_cta_secondary, wallet_card_label, wallet_protocol_tag, footer_text, existing.rows[0].id]
-      );
-      res.json(updated.rows[0]);
+      const resUpdated = await db.update(siteSettings).set({
+        heroBadge: hero_badge ?? existing[0].heroBadge,
+        heroTitlePrefix: hero_title_prefix ?? existing[0].heroTitlePrefix,
+        heroTitleHighlight: hero_title_highlight ?? existing[0].heroTitleHighlight,
+        heroTitleSuffix: hero_title_suffix ?? existing[0].heroTitleSuffix,
+        heroDescription: hero_description ?? existing[0].heroDescription,
+        heroCtaPrimary: hero_cta_primary ?? existing[0].heroCtaPrimary,
+        heroCtaSecondary: hero_cta_secondary ?? existing[0].heroCtaSecondary,
+        walletCardLabel: wallet_card_label ?? existing[0].walletCardLabel,
+        walletProtocolTag: wallet_protocol_tag ?? existing[0].walletProtocolTag,
+        footerText: footer_text ?? existing[0].footerText,
+        updatedAt: new Date(),
+      }).where(eq(siteSettings.id, existing[0].id)).returning();
+      updated = resUpdated[0];
     }
+
+    res.json({
+      id: updated.id,
+      hero_badge: updated.heroBadge,
+      hero_title_prefix: updated.heroTitlePrefix,
+      hero_title_highlight: updated.heroTitleHighlight,
+      hero_title_suffix: updated.heroTitleSuffix,
+      hero_description: updated.heroDescription,
+      hero_cta_primary: updated.heroCtaPrimary,
+      hero_cta_secondary: updated.heroCtaSecondary,
+      wallet_card_label: updated.walletCardLabel,
+      wallet_protocol_tag: updated.walletProtocolTag,
+      footer_text: updated.footerText,
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -140,8 +177,25 @@ app.put('/api/settings', authenticateToken, async (req: AuthRequest, res: Respon
 // ---------------- PROFILE ROUTES ----------------
 app.get('/api/profile', async (_req: Request, res: Response) => {
   try {
-    const result = await pool.query('SELECT * FROM profile ORDER BY id ASC LIMIT 1');
-    res.json(result.rows[0] || null);
+    const result = await db.select().from(profile).limit(1);
+    const p = result[0];
+    if (!p) {
+      res.json(null);
+      return;
+    }
+    res.json({
+      id: p.id,
+      name: p.name,
+      title: p.title,
+      bio: p.bio,
+      avatar_url: p.avatarUrl,
+      email: p.email,
+      github_url: p.githubUrl,
+      linkedin_url: p.linkedinUrl,
+      twitter_url: p.twitterUrl,
+      skills: p.skills,
+      updated_at: p.updatedAt,
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -150,32 +204,49 @@ app.get('/api/profile', async (_req: Request, res: Response) => {
 app.put('/api/profile', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
   const { name, title, bio, avatar_url, email, github_url, linkedin_url, twitter_url, skills } = req.body;
   try {
-    const existing = await pool.query('SELECT id FROM profile LIMIT 1');
-    if (existing.rows.length === 0) {
-      const inserted = await pool.query(
-        `INSERT INTO profile (name, title, bio, avatar_url, email, github_url, linkedin_url, twitter_url, skills)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-        [name, title, bio, avatar_url, email, github_url, linkedin_url, twitter_url, JSON.stringify(skills || [])]
-      );
-      res.json(inserted.rows[0]);
+    const existing = await db.select().from(profile).limit(1);
+    let updated;
+    if (existing.length === 0) {
+      const inserted = await db.insert(profile).values({
+        name,
+        title,
+        bio,
+        avatarUrl: avatar_url,
+        email,
+        githubUrl: github_url,
+        linkedinUrl: linkedin_url,
+        twitterUrl: twitter_url,
+        skills: skills || [],
+      }).returning();
+      updated = inserted[0];
     } else {
-      const updated = await pool.query(
-        `UPDATE profile SET 
-          name = COALESCE($1, name),
-          title = COALESCE($2, title),
-          bio = COALESCE($3, bio),
-          avatar_url = COALESCE($4, avatar_url),
-          email = COALESCE($5, email),
-          github_url = COALESCE($6, github_url),
-          linkedin_url = COALESCE($7, linkedin_url),
-          twitter_url = COALESCE($8, twitter_url),
-          skills = COALESCE($9, skills),
-          updated_at = CURRENT_TIMESTAMP
-         WHERE id = $10 RETURNING *`,
-        [name, title, bio, avatar_url, email, github_url, linkedin_url, twitter_url, skills ? JSON.stringify(skills) : null, existing.rows[0].id]
-      );
-      res.json(updated.rows[0]);
+      const resUpdated = await db.update(profile).set({
+        name: name ?? existing[0].name,
+        title: title ?? existing[0].title,
+        bio: bio ?? existing[0].bio,
+        avatarUrl: avatar_url ?? existing[0].avatarUrl,
+        email: email ?? existing[0].email,
+        githubUrl: github_url ?? existing[0].githubUrl,
+        linkedinUrl: linkedin_url ?? existing[0].linkedinUrl,
+        twitterUrl: twitter_url ?? existing[0].twitterUrl,
+        skills: skills ?? existing[0].skills,
+        updatedAt: new Date(),
+      }).where(eq(profile.id, existing[0].id)).returning();
+      updated = resUpdated[0];
     }
+
+    res.json({
+      id: updated.id,
+      name: updated.name,
+      title: updated.title,
+      bio: updated.bio,
+      avatar_url: updated.avatarUrl,
+      email: updated.email,
+      github_url: updated.githubUrl,
+      linkedin_url: updated.linkedinUrl,
+      twitter_url: updated.twitterUrl,
+      skills: updated.skills,
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -184,11 +255,22 @@ app.put('/api/profile', authenticateToken, async (req: AuthRequest, res: Respons
 // ---------------- WEBPAGES ROUTES ----------------
 app.get('/api/webpages', async (_req: Request, res: Response) => {
   try {
-    const result = await pool.query(`
-      SELECT * FROM webpages 
-      ORDER BY pinned DESC, is_featured DESC, created_at DESC
-    `);
-    res.json(result.rows);
+    const result = await db.select().from(webpages).orderBy(desc(webpages.pinned), desc(webpages.isFeatured), desc(webpages.createdAt));
+    res.json(result.map(w => ({
+      id: w.id,
+      title: w.title,
+      url: w.url,
+      description: w.description,
+      category: w.category,
+      icon: w.icon,
+      badge: w.badge,
+      preview_image: w.previewImage,
+      color_gradient: w.colorGradient,
+      is_featured: w.isFeatured,
+      pinned: w.pinned,
+      created_at: w.createdAt,
+      updated_at: w.updatedAt,
+    })));
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -196,18 +278,33 @@ app.get('/api/webpages', async (_req: Request, res: Response) => {
 
 app.get('/api/webpages/:id', async (req: Request, res: Response): Promise<void> => {
   try {
-    const result = await pool.query('SELECT * FROM webpages WHERE id = $1', [req.params.id]);
-    if (result.rows.length === 0) {
+    const id = parseInt(req.params.id, 10);
+    const result = await db.select().from(webpages).where(eq(webpages.id, id)).limit(1);
+    if (result.length === 0) {
       res.status(404).json({ error: 'Webpage not found' });
       return;
     }
-    res.json(result.rows[0]);
+    const w = result[0];
+    res.json({
+      id: w.id,
+      title: w.title,
+      url: w.url,
+      description: w.description,
+      category: w.category,
+      icon: w.icon,
+      badge: w.badge,
+      preview_image: w.previewImage,
+      color_gradient: w.colorGradient,
+      is_featured: w.isFeatured,
+      pinned: w.pinned,
+      created_at: w.createdAt,
+      updated_at: w.updatedAt,
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Create webpage with optional image upload
 app.post('/api/webpages', authenticateToken, upload.single('preview_image_file'), async (req: AuthRequest, res: Response): Promise<void> => {
   const { title, url, description, category, icon, badge, preview_image, color_gradient, is_featured, pinned } = req.body;
 
@@ -216,39 +313,47 @@ app.post('/api/webpages', authenticateToken, upload.single('preview_image_file')
     return;
   }
 
-  // File upload takes precedence if provided, otherwise use URL string
   let finalPreviewImage = preview_image || null;
   if (req.file) {
     finalPreviewImage = `/uploads/${req.file.filename}`;
   }
 
   try {
-    const result = await pool.query(
-      `INSERT INTO webpages (title, url, description, category, icon, badge, preview_image, color_gradient, is_featured, pinned)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-       RETURNING *`,
-      [
-        title,
-        url,
-        description || '',
-        category || 'Web App',
-        icon || 'globe',
-        badge || 'Live',
-        finalPreviewImage,
-        color_gradient || 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)',
-        is_featured === true || is_featured === 'true',
-        pinned === true || pinned === 'true'
-      ]
-    );
-    res.status(201).json(result.rows[0]);
+    const inserted = await db.insert(webpages).values({
+      title,
+      url,
+      description: description || '',
+      category: category || 'Web App',
+      icon: icon || 'globe',
+      badge: badge || 'Live',
+      previewImage: finalPreviewImage,
+      colorGradient: color_gradient || 'linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)',
+      isFeatured: is_featured === true || is_featured === 'true',
+      pinned: pinned === true || pinned === 'true',
+    }).returning();
+
+    const w = inserted[0];
+    res.status(201).json({
+      id: w.id,
+      title: w.title,
+      url: w.url,
+      description: w.description,
+      category: w.category,
+      icon: w.icon,
+      badge: w.badge,
+      preview_image: w.previewImage,
+      color_gradient: w.colorGradient,
+      is_featured: w.isFeatured,
+      pinned: w.pinned,
+      created_at: w.createdAt,
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Update webpage with optional image upload
 app.put('/api/webpages/:id', authenticateToken, upload.single('preview_image_file'), async (req: AuthRequest, res: Response): Promise<void> => {
-  const { id } = req.params;
+  const id = parseInt(req.params.id, 10);
   const { title, url, description, category, icon, badge, preview_image, color_gradient, is_featured, pinned } = req.body;
 
   let finalPreviewImage = preview_image !== undefined ? preview_image : null;
@@ -257,48 +362,56 @@ app.put('/api/webpages/:id', authenticateToken, upload.single('preview_image_fil
   }
 
   try {
-    const isFeaturedBool = is_featured !== undefined ? (is_featured === true || is_featured === 'true') : null;
-    const pinnedBool = pinned !== undefined ? (pinned === true || pinned === 'true') : null;
-
-    const result = await pool.query(
-      `UPDATE webpages SET 
-        title = COALESCE($1, title),
-        url = COALESCE($2, url),
-        description = COALESCE($3, description),
-        category = COALESCE($4, category),
-        icon = COALESCE($5, icon),
-        badge = COALESCE($6, badge),
-        preview_image = CASE WHEN $7::text IS NOT NULL THEN $7::text ELSE preview_image END,
-        color_gradient = COALESCE($8, color_gradient),
-        is_featured = COALESCE($9, is_featured),
-        pinned = COALESCE($10, pinned),
-        updated_at = CURRENT_TIMESTAMP
-       WHERE id = $11 RETURNING *`,
-      [title, url, description, category, icon, badge, finalPreviewImage, color_gradient, isFeaturedBool, pinnedBool, id]
-    );
-
-    if (result.rows.length === 0) {
+    const existing = await db.select().from(webpages).where(eq(webpages.id, id)).limit(1);
+    if (existing.length === 0) {
       res.status(404).json({ error: 'Webpage not found' });
       return;
     }
 
-    res.json(result.rows[0]);
+    const updated = await db.update(webpages).set({
+      title: title ?? existing[0].title,
+      url: url ?? existing[0].url,
+      description: description ?? existing[0].description,
+      category: category ?? existing[0].category,
+      icon: icon ?? existing[0].icon,
+      badge: badge ?? existing[0].badge,
+      previewImage: finalPreviewImage !== null ? finalPreviewImage : existing[0].previewImage,
+      colorGradient: color_gradient ?? existing[0].colorGradient,
+      isFeatured: is_featured !== undefined ? (is_featured === true || is_featured === 'true') : existing[0].isFeatured,
+      pinned: pinned !== undefined ? (pinned === true || pinned === 'true') : existing[0].pinned,
+      updatedAt: new Date(),
+    }).where(eq(webpages.id, id)).returning();
+
+    const w = updated[0];
+    res.json({
+      id: w.id,
+      title: w.title,
+      url: w.url,
+      description: w.description,
+      category: w.category,
+      icon: w.icon,
+      badge: w.badge,
+      preview_image: w.previewImage,
+      color_gradient: w.colorGradient,
+      is_featured: w.isFeatured,
+      pinned: w.pinned,
+      updated_at: w.updatedAt,
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
 app.delete('/api/webpages/:id', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
-  const { id } = req.params;
+  const id = parseInt(req.params.id, 10);
   try {
-    const result = await pool.query('DELETE FROM webpages WHERE id = $1 RETURNING id, preview_image', [id]);
-    if (result.rows.length === 0) {
+    const deleted = await db.delete(webpages).where(eq(webpages.id, id)).returning({ id: webpages.id, previewImage: webpages.previewImage });
+    if (deleted.length === 0) {
       res.status(404).json({ error: 'Webpage not found' });
       return;
     }
-    
-    // Clean up uploaded preview image if local
-    const preview = result.rows[0].preview_image;
+
+    const preview = deleted[0].previewImage;
     if (preview && preview.startsWith('/uploads/')) {
       const p = path.join(uploadsDir, path.basename(preview));
       if (fs.existsSync(p)) {
@@ -315,12 +428,19 @@ app.delete('/api/webpages/:id', authenticateToken, async (req: AuthRequest, res:
 // ---------------- FILES ROUTES ----------------
 app.get('/api/files', async (_req: Request, res: Response) => {
   try {
-    const result = await pool.query(`
-      SELECT id, title, original_name, filename, file_size, mime_type, category, description, downloads, created_at
-      FROM files 
-      ORDER BY created_at DESC
-    `);
-    res.json(result.rows);
+    const result = await db.select().from(files).orderBy(desc(files.createdAt));
+    res.json(result.map(f => ({
+      id: f.id,
+      title: f.title,
+      original_name: f.originalName,
+      filename: f.filename,
+      file_size: f.fileSize,
+      mime_type: f.mimeType,
+      category: f.category,
+      description: f.description,
+      downloads: f.downloads,
+      created_at: f.createdAt,
+    })));
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -340,37 +460,45 @@ app.post('/api/files', authenticateToken, upload.single('file'), async (req: Aut
   const mime_type = req.file.mimetype;
 
   try {
-    const result = await pool.query(
-      `INSERT INTO files (title, original_name, filename, filepath, file_size, mime_type, category, description)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING *`,
-      [
-        title || original_name,
-        original_name,
-        filename,
-        filepath,
-        file_size,
-        mime_type,
-        category || 'Document',
-        description || ''
-      ]
-    );
-    res.status(201).json(result.rows[0]);
+    const inserted = await db.insert(files).values({
+      title: title || original_name,
+      originalName: original_name,
+      filename,
+      filepath,
+      fileSize: file_size,
+      mimeType: mime_type,
+      category: category || 'Document',
+      description: description || '',
+      downloads: 0,
+    }).returning();
+
+    const f = inserted[0];
+    res.status(201).json({
+      id: f.id,
+      title: f.title,
+      original_name: f.originalName,
+      filename: f.filename,
+      file_size: f.fileSize,
+      mime_type: f.mimeType,
+      category: f.category,
+      description: f.description,
+      created_at: f.createdAt,
+    });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
 app.get('/api/files/:id/download', async (req: Request, res: Response): Promise<void> => {
-  const { id } = req.params;
+  const id = parseInt(req.params.id, 10);
   try {
-    const result = await pool.query('SELECT * FROM files WHERE id = $1', [id]);
-    if (result.rows.length === 0) {
+    const result = await db.select().from(files).where(eq(files.id, id)).limit(1);
+    if (result.length === 0) {
       res.status(404).json({ error: 'File not found' });
       return;
     }
 
-    const file = result.rows[0];
+    const file = result[0];
     const physicalPath = path.join(uploadsDir, file.filename);
 
     if (!fs.existsSync(physicalPath)) {
@@ -378,28 +506,26 @@ app.get('/api/files/:id/download', async (req: Request, res: Response): Promise<
       return;
     }
 
-    pool.query('UPDATE files SET downloads = downloads + 1 WHERE id = $1', [id]).catch(console.error);
-    res.download(physicalPath, file.original_name);
+    db.update(files).set({ downloads: sql`${files.downloads} + 1` }).where(eq(files.id, id)).catch(console.error);
+    res.download(physicalPath, file.originalName);
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
 app.delete('/api/files/:id', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
-  const { id } = req.params;
+  const id = parseInt(req.params.id, 10);
   try {
-    const result = await pool.query('DELETE FROM files WHERE id = $1 RETURNING filename', [id]);
-    if (result.rows.length === 0) {
+    const deleted = await db.delete(files).where(eq(files.id, id)).returning({ filename: files.filename });
+    if (deleted.length === 0) {
       res.status(404).json({ error: 'File not found' });
       return;
     }
 
-    const filename = result.rows[0].filename;
+    const filename = deleted[0].filename;
     const physicalPath = path.join(uploadsDir, filename);
     if (fs.existsSync(physicalPath)) {
-      try {
-        fs.unlinkSync(physicalPath);
-      } catch (e) {}
+      try { fs.unlinkSync(physicalPath); } catch (e) {}
     }
 
     res.json({ message: 'File deleted successfully', id });
@@ -411,14 +537,18 @@ app.delete('/api/files/:id', authenticateToken, async (req: AuthRequest, res: Re
 // ---------------- STATS ROUTE ----------------
 app.get('/api/stats', async (_req: Request, res: Response) => {
   try {
-    const webpagesCount = await pool.query('SELECT COUNT(*) as count FROM webpages');
-    const filesCount = await pool.query('SELECT COUNT(*) as count, COALESCE(SUM(file_size), 0) as total_size, COALESCE(SUM(downloads), 0) as total_downloads FROM files');
-    
+    const webCount = await db.select({ val: count() }).from(webpages);
+    const fileStats = await db.select({
+      count: count(),
+      totalSize: sql<number>`coalesce(sum(${files.fileSize}), 0)`,
+      totalDownloads: sql<number>`coalesce(sum(${files.downloads}), 0)`
+    }).from(files);
+
     res.json({
-      totalWebpages: parseInt(webpagesCount.rows[0].count, 10),
-      totalFiles: parseInt(filesCount.rows[0].count, 10),
-      totalSize: parseInt(filesCount.rows[0].total_size, 10),
-      totalDownloads: parseInt(filesCount.rows[0].total_downloads, 10)
+      totalWebpages: Number(webCount[0].val),
+      totalFiles: Number(fileStats[0].count),
+      totalSize: Number(fileStats[0].totalSize),
+      totalDownloads: Number(fileStats[0].totalDownloads),
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -443,7 +573,7 @@ async function bootstrap() {
   try {
     await initDB();
     app.listen(PORT, () => {
-      console.log(`Server running at http://localhost:${PORT}`);
+      console.log(`Server running with Drizzle ORM at http://localhost:${PORT}`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

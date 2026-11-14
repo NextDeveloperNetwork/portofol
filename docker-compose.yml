@@ -9,8 +9,6 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - PORT=${PORT:-3000}
       - JWT_SECRET=${JWT_SECRET}
-      - ADMIN_USERNAME=${ADMIN_USERNAME}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
     ports:
       - "${HOST_PORT:-48921}:${PORT:-3000}"
     volumes:

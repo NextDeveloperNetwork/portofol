@@ -1,20 +1,30 @@
 {
   "name": "personal-wallet",
   "version": "1.0.0",
-  "description": "Personal Web & Asset Wallet with TypeScript, PostgreSQL, and modern UI",
+  "description": "Personal Web & Asset Wallet with TypeScript, Drizzle ORM, PostgreSQL, and modern UI",
   "main": "dist/server.js",
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "nodemon --watch src --exec ts-node src/server.ts"
+    "dev": "nodemon --watch src --exec ts-node src/server.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push"
   },
-  "keywords": ["wallet", "portfolio", "assets", "typescript", "postgres"],
+  "keywords": [
+    "wallet",
+    "portfolio",
+    "assets",
+    "typescript",
+    "postgres",
+    "drizzle-orm"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
+    "drizzle-orm": "^0.45.1",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
@@ -28,6 +38,7 @@
     "@types/multer": "^1.4.12",
     "@types/node": "^22.13.9",
     "@types/pg": "^8.11.11",
+    "drizzle-kit": "^0.31.8",
     "nodemon": "^3.1.9",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2"

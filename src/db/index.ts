@@ -1,6 +1,10 @@
+import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
+import * as schema from './schema';
+import { users, profile, webpages, siteSettings } from './schema';
+import { eq, count } from 'drizzle-orm';
 
 dotenv.config();
 
@@ -8,12 +12,12 @@ export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+export const db = drizzle(pool, { schema });
+
 export async function initDB() {
   const client = await pool.connect();
   try {
-    await client.query('BEGIN');
-
-    // Users table
+    // Ensure base tables exist
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -21,10 +25,7 @@ export async function initDB() {
         password_hash VARCHAR(255) NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
-    `);
 
-    // Profile table
-    await client.query(`
       CREATE TABLE IF NOT EXISTS profile (
         id SERIAL PRIMARY KEY,
         name VARCHAR(200) NOT NULL,
@@ -38,10 +39,7 @@ export async function initDB() {
         skills JSONB DEFAULT '[]'::jsonb,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
-    `);
 
-    // Webpages table
-    await client.query(`
       CREATE TABLE IF NOT EXISTS webpages (
         id SERIAL PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
@@ -57,10 +55,7 @@ export async function initDB() {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
-    `);
 
-    // Files table
-    await client.query(`
       CREATE TABLE IF NOT EXISTS files (
         id SERIAL PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
@@ -74,10 +69,7 @@ export async function initDB() {
         downloads INTEGER DEFAULT 0,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
-    `);
 
-    // Site settings table (Editable landing page info)
-    await client.query(`
       CREATE TABLE IF NOT EXISTS site_settings (
         id SERIAL PRIMARY KEY,
         hero_badge VARCHAR(255) DEFAULT 'Personal Multi-Asset Web Vault',
@@ -94,70 +86,56 @@ export async function initDB() {
       );
     `);
 
-    // Admin user initialization
-    const adminUser = process.env.ADMIN_USERNAME || 'admin';
-    const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
-    const existingAdmin = await client.query('SELECT id FROM users WHERE username = $1', [adminUser]);
-
-    if (existingAdmin.rows.length === 0) {
-      const hash = await bcrypt.hash(adminPass, 10);
-      await client.query(
-        'INSERT INTO users (username, password_hash) VALUES ($1, $2)',
-        [adminUser, hash]
-      );
+    // Verify if default admin user exists in DB; if empty, seed initial user without reading .env
+    const userCount = await db.select({ value: count() }).from(users);
+    if (userCount[0].value === 0) {
+      const defaultHash = await bcrypt.hash('admin123', 10);
+      await db.insert(users).values({
+        username: 'admin',
+        passwordHash: defaultHash,
+      });
+      console.log('Drizzle: Seeded initial admin user (admin) in PostgreSQL');
     }
 
-    // Default site settings
-    const existingSettings = await client.query('SELECT id FROM site_settings LIMIT 1');
-    if (existingSettings.rows.length === 0) {
-      await client.query(`
-        INSERT INTO site_settings (
-          hero_badge, hero_title_prefix, hero_title_highlight, hero_title_suffix,
-          hero_description, hero_cta_primary, hero_cta_secondary, wallet_card_label, wallet_protocol_tag, footer_text
-        ) VALUES (
-          'Personal Multi-Asset Web Vault',
-          'All My',
-          'Webpages & Files',
-          'In One Clean Vault',
-          'An interactive, high-performance personal wallet holding my live web applications, digital tools, and downloadable documents. Built with TypeScript and PostgreSQL.',
-          'Explore Vault',
-          'About Creator',
-          'TOTAL ASSET BALANCE',
-          'PG-TS-V2',
-          '© 2026 Adenisa • Personal Digital Asset Wallet • Powered by TypeScript & PostgreSQL'
-        );
-      `);
+    // Verify site settings
+    const settingsCount = await db.select({ value: count() }).from(siteSettings);
+    if (settingsCount[0].value === 0) {
+      await db.insert(siteSettings).values({
+        heroBadge: 'Personal Multi-Asset Web Vault',
+        heroTitlePrefix: 'All My',
+        heroTitleHighlight: 'Webpages & Files',
+        heroTitleSuffix: 'In One Clean Vault',
+        heroDescription: 'An interactive, high-performance personal wallet holding my live web applications, digital tools, and downloadable documents. Built with TypeScript and PostgreSQL.',
+        heroCtaPrimary: 'Explore Vault',
+        heroCtaSecondary: 'About Creator',
+        walletCardLabel: 'TOTAL ASSET BALANCE',
+        walletProtocolTag: 'PG-TS-V2',
+        footerText: '© 2026 Adenisa • Personal Digital Asset Wallet • Powered by TypeScript & PostgreSQL',
+      });
     }
 
-    // Initialize profile if none exists
-    const existingProfile = await client.query('SELECT id FROM profile LIMIT 1');
-    if (existingProfile.rows.length === 0) {
+    // Verify profile
+    const profileCount = await db.select({ value: count() }).from(profile);
+    if (profileCount[0].value === 0) {
       const skills = [
-        'TypeScript', 'Node.js', 'PostgreSQL', 'Modern UI/UX',
+        'TypeScript', 'Node.js', 'PostgreSQL', 'Drizzle ORM',
         'CSS Architecture', 'Full-Stack Engineering', 'API Design', 'DevOps'
       ];
-      await client.query(
-        `INSERT INTO profile (name, title, bio, email, github_url, linkedin_url, twitter_url, skills)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-        [
-          'Adenisa',
-          'Full-Stack Developer & Software Architect',
-          'Passionate software craftsman building resilient web ecosystems, modern user interfaces, and scalable backends. Welcome to my personal digital wallet - an interactive vault of my curated web applications, public tools, and digital documents.',
-          'adenisa@example.com',
-          'https://github.com',
-          'https://linkedin.com',
-          'https://x.com',
-          JSON.stringify(skills)
-        ]
-      );
+      await db.insert(profile).values({
+        name: 'Adenisa',
+        title: 'Full-Stack Developer & Software Architect',
+        bio: 'Passionate software craftsman building resilient web ecosystems, modern user interfaces, and scalable backends. Welcome to my personal digital wallet - an interactive vault of my curated web applications, public tools, and digital documents.',
+        email: 'adenisa@example.com',
+        githubUrl: 'https://github.com',
+        linkedinUrl: 'https://linkedin.com',
+        twitterUrl: 'https://x.com',
+        skills: skills,
+      });
     }
 
-    await client.query('COMMIT');
-  } catch (err) {
-    await client.query('ROLLBACK');
-    console.error('Error initializing database:', err);
-    throw err;
+    console.log('Drizzle ORM & PostgreSQL connected successfully');
   } finally {
     client.release();
   }
 }
+
